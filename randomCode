@@ -1,0 +1,247 @@
+import java.io.*;
+import java.util.*;
+
+// Main class
+public class StudentCRUDApp {
+    public static void main(String[] args) {
+        StudentManager manager = new StudentManager();
+        Scanner scanner = new Scanner(System.in);
+        
+        while (true) {
+            System.out.println("\n=== Student Management System ===");
+            System.out.println("1. Add Student");
+            System.out.println("2. View All Students");
+            System.out.println("3. Update Student");
+            System.out.println("4. Delete Student");
+            System.out.println("5. Save to File");
+            System.out.println("6. Load from File");
+            System.out.println("7. Sort Students");
+            System.out.println("8. Exit");
+            System.out.print("Enter your choice: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    manager.addStudent(scanner);
+                    break;
+                case 2:
+                    manager.viewAllStudents();
+                    break;
+                case 3:
+                    manager.updateStudent(scanner);
+                    break;
+                case 4:
+                    manager.deleteStudent(scanner);
+                    break;
+                case 5:
+                    manager.saveToFile("students.txt");
+                    break;
+                case 6:
+                    manager.loadFromFile("students.txt");
+                    break;
+                case 7:
+                    manager.sortStudents(scanner);
+                    break;
+                case 8:
+                    System.out.println("Exiting application.");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+}
+
+// Student class
+class Student implements Serializable {
+    private int id;
+    private String name;
+    private int age;
+    private String major;
+
+    public Student(int id, String name, int age, String major) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.major = major;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getMajor() {
+        return major;
+    }
+
+    public void setMajor(String major) {
+        this.major = major;
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + ", Name: " + name + ", Age: " + age + ", Major: " + major;
+    }
+}
+
+// StudentManager class
+class StudentManager {
+    private List<Student> students = new ArrayList<>();
+
+    public void addStudent(Scanner scanner) {
+        System.out.print("Enter Student ID: ");
+        int id = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        System.out.print("Enter Student Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter Student Age: ");
+        int age = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        System.out.print("Enter Student Major: ");
+        String major = scanner.nextLine();
+
+        students.add(new Student(id, name, age, major));
+        logAction("Added Student: " + id);
+        System.out.println("Student added successfully.");
+    }
+
+    public void viewAllStudents() {
+        if (students.isEmpty()) {
+            System.out.println("No students available.");
+        } else {
+            System.out.println("\n=== List of Students ===");
+            for (Student student : students) {
+                System.out.println(student);
+            }
+        }
+    }
+
+    public void updateStudent(Scanner scanner) {
+        System.out.print("Enter Student ID to update: ");
+        int id = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        for (Student student : students) {
+            if (student.getId() == id) {
+                System.out.print("Enter new Name (leave blank to keep current): ");
+                String name = scanner.nextLine();
+                if (!name.isEmpty()) {
+                    student.setName(name);
+                }
+
+                System.out.print("Enter new Age (or -1 to keep current): ");
+                int age = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+                if (age != -1) {
+                    student.setAge(age);
+                }
+
+                System.out.print("Enter new Major (leave blank to keep current): ");
+                String major = scanner.nextLine();
+                if (!major.isEmpty()) {
+                    student.setMajor(major);
+                }
+
+                logAction("Updated Student: " + id);
+                System.out.println("Student updated successfully.");
+                return;
+            }
+        }
+        System.out.println("Student not found.");
+    }
+
+    public void deleteStudent(Scanner scanner) {
+        System.out.print("Enter Student ID to delete: ");
+        int id = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        Iterator<Student> iterator = students.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().getId() == id) {
+                iterator.remove();
+                logAction("Deleted Student: " + id);
+                System.out.println("Student deleted successfully.");
+                return;
+            }
+        }
+        System.out.println("Student not found.");
+    }
+
+    public void saveToFile(String filename) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(students);
+            logAction("Saved students to file.");
+            System.out.println("Students saved to file successfully.");
+        } catch (IOException e) {
+            System.out.println("Error saving students to file: " + e.getMessage());
+        }
+    }
+
+    public void loadFromFile(String filename) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            students = (List<Student>) ois.readObject();
+            logAction("Loaded students from file.");
+            System.out.println("Students loaded from file successfully.");
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading students from file: " + e.getMessage());
+        }
+    }
+
+    public void sortStudents(Scanner scanner) {
+        System.out.println("\nSort by:");
+        System.out.println("1. Name");
+        System.out.println("2. Age");
+        System.out.println("3. ID");
+        System.out.print("Enter your choice: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        switch (choice) {
+            case 1:
+                students.sort(Comparator.comparing(Student::getName));
+                logAction("Sorted students by name.");
+                break;
+            case 2:
+                students.sort(Comparator.comparingInt(Student::getAge));
+                logAction("Sorted students by age.");
+                break;
+            case 3:
+                students.sort(Comparator.comparingInt(Student::getId));
+                logAction("Sorted students by ID.");
+                break;
+            default:
+                System.out.println("Invalid choice.");
+                return;
+        }
+        System.out.println("Students sorted successfully.");
+    }
+
+    private void logAction(String action) {
+        try (FileWriter fw = new FileWriter("actions.log", true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+            out.println(new Date() + " - " + action);
+        } catch (IOException e) {
+            System.out.println("Error logging action: " + e.getMessage());
+        }
+    }
+}
